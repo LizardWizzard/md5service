@@ -1,3 +1,22 @@
+[tool.black]
+line-length = 88
+target-version = ["py37"]
+skip-string-normalization = true
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+)/
+'''
+
 [tool.poetry]
 name = "md5service"
 version = "0.1.0"
@@ -10,9 +29,13 @@ aiohttp = "^3.5"
 pydantic = {version = "^0.29.0",extras = ["email"]}
 aioredis = "^1.2"
 python-dotenv = "^0.10.3"
+aiosmtplib = "^1.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^3.0"
+black = {version = "^18.3-alpha.0",allows-prereleases = true}
+pre-commit = "^1.17"
+pytest-aiohttp = "^0.3.0"
 
 [build-system]
 requires = ["poetry>=0.12"]
