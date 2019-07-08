@@ -10,11 +10,13 @@ from md5service.handlers import routes
 
 logger = logging.getLogger('md5service')
 
+logging.basicConfig(level=logging.INFO)
+
 
 async def init_redis(app: web.Application):
     redis = await aioredis.create_redis_pool(
         os.getenv("REDIS_URL"),  # TODO validate redis url
-        minsize=5,
+        minsize=5,  # TODO add to env config hardcoded values
         maxsize=10,
         loop=asyncio.get_event_loop(),
     )
@@ -30,8 +32,8 @@ async def close_redis(app: web.Application):
 
 
 def make_app() -> web.Application:
+    load_dotenv()
     smtpconf = mail.SMTPConfig(host=os.getenv("SMTP_HOST"), port=os.getenv("SMTP_PORT"))
-
     app = web.Application()
     app['smtpconf'] = smtpconf
     app.add_routes(routes)
@@ -41,9 +43,4 @@ def make_app() -> web.Application:
 
 
 if __name__ == '__main__':
-    load_dotenv()
-    web.run_app(
-        port=os.environ.get("PORT"),  # TODO validate port
-        app=make_app(),
-        access_log_format='%a %t %Tf "%r" %s %b "%{Referer}i" "%{User-Agent}i"',
-    )
+    web.run_app(port=os.environ.get("PORT"), app=make_app())  # TODO validate port

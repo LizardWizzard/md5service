@@ -21,7 +21,7 @@ def validate_request_dto(dto_cls):
             except pydantic.ValidationError as err:
                 return web.json_response(status=HTTPStatus.BAD_REQUEST, data=err.json())
 
-            return handler(request, data)
+            return await handler(request, data)
 
         return inner
 

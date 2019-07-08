@@ -15,8 +15,3 @@ repos:
     - id: flake8
       name: flake8
       entry: flake8
-      exclude: >
-          (?x)^(
-              libs/cache_dependencies/.+\.py|
-              modules/django_cache_dependencies/.+\.py
-          )$

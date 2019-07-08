@@ -25,16 +25,18 @@ async def submit(request: web.Request, data: dto.SubmitRequest) -> web.Response:
     try:
         await redis.set(task_uuid, task_state.json())
     except Exception as e:
-        logger.error("Failed to save task state: %s", e)
+        logger.error('Failed to save task state: %s', e)
         return web.json_response(
             status=HTTPStatus.INTERNAL_SERVER_ERROR,
-            data={"status": "error", "msg": "Failed to save task state"},
+            data={'status': 'error', 'msg': 'Failed to save task state'},
         )
 
     loop = asyncio.get_event_loop()
-    loop.create_task(calculator.calc_task(task_uuid, task_state, redis))
+    loop.create_task(
+        calculator.calc_task(task_uuid, task_state, redis, request.app['smtpconf'])
+    )
 
-    return web.json_response({"id": task_uuid}, status=HTTPStatus.ACCEPTED)
+    return web.json_response({'id': task_uuid}, status=HTTPStatus.ACCEPTED)
 
 
 @routes.post('/check')
@@ -42,19 +44,20 @@ async def submit(request: web.Request, data: dto.SubmitRequest) -> web.Response:
 async def check(request: web.Request, data: dto.CheckRequest):
     redis: Redis = request.app['redis']
     try:
-        result = redis.get(data.id)
+        result = await redis.get(data.id)
     except Exception as e:
-        logger.error("Failed to retrieve task state: %s", e)
+        logger.error('Failed to retrieve task state: %s', e)
         return web.json_response(
             status=HTTPStatus.INTERNAL_SERVER_ERROR,
-            data={"status": "error", "msg": "Failed to retrieve task state"},
+            data={'status': 'error', 'msg': 'Failed to retrieve task state'},
+        )
+
+    if not result:
+        return web.json_response(
+            status=HTTPStatus.NOT_FOUND, data={'status': 'not_found'}
         )
 
     # assumed that no one can change value we put to redis,
     # so values we can get are trusted and validation is redundant
     task_state = dto.TaskState.parse_raw(result)
-
-    if result:
-        return web.json_response(task_state.json(include={"md5", "status", "url"}))
-
-    return web.json_response(status=HTTPStatus.NOT_FOUND)
+    return web.json_response(task_state.dict(include={'md5', 'status', 'url', 'err'}))
